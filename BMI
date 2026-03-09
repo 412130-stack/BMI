@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>毒舌 BMI 計算機</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            font-family: 'Microsoft JhengHei', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('640.jpeg'); /* 使用上傳的圖片 */
+            background-size: cover;
+            background-position: center;
+            z-index: -1;
+            filter: brightness(0.7);
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(234, 43, 143, 0.3);
+            width: 90%;
+            max-width: 400px;
+            padding: 2rem;
+            color: white;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-group input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #ea2b8f;
+            color: #ff9ed2;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            box-shadow: 0 0 10px #ea2b8f;
+            border-color: #ff007f;
+        }
+
+        .calc-btn {
+            background: linear-gradient(135deg, #ea2b8f 0%, #7c00ff 100%);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .calc-btn:active {
+            transform: scale(0.95);
+        }
+
+        #result-box {
+            display: none;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; height: 0; }
+            to { opacity: 1; height: auto; }
+        }
+
+        .toxic-text {
+            color: #ff007f;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(255, 0, 127, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="background-container"></div>
+
+    <div class="glass-panel text-center">
+        <h1 class="text-3xl font-black mb-6 italic tracking-widest text-[#ea2b8f]">
+            BMI <span class="text-white">SCANNER</span>
+        </h1>
+        
+        <p class="mb-6 text-sm opacity-80">「喂，在那邊看什麼看？快把資料輸入進去，讓我看看你到底有多『重』要？」</p>
+
+        <div class="space-y-4">
+            <div class="input-group text-left">
+                <label class="block text-xs uppercase mb-1 ml-1 text-[#ff9ed2]">身高 (cm)</label>
+                <input type="number" id="height" placeholder="例如：165" class="w-full p-3 rounded-lg text-lg">
+            </div>
+
+            <div class="input-group text-left">
+                <label class="block text-xs uppercase mb-1 ml-1 text-[#ff9ed2]">體重 (kg)</label>
+                <input type="number" id="weight" placeholder="例如：55" class="w-full p-3 rounded-lg text-lg">
+            </div>
+
+            <button onclick="calculateBMI()" class="calc-btn w-full py-4 rounded-xl font-bold text-xl mt-4 shadow-lg">
+                開始審判
+            </button>
+        </div>
+
+        <div id="result-box" class="mt-8 border-t border-pink-500 pt-6">
+            <div class="text-lg mb-2">你的 BMI 是：<span id="bmi-value" class="text-3xl font-black">22.5</span></div>
+            <div id="status-label" class="inline-block px-3 py-1 bg-pink-600 rounded-md text-xs mb-4">正常範圍</div>
+            <div id="comment" class="toxic-text italic text-lg leading-relaxed"></div>
+        </div>
+    </div>
+
+    <script>
+        const roastLibrary = {
+            under: [
+                "「哈？你是紙糊的嗎？風吹一下就飛走了吧，真沒存在感。」",
+                "「這體重...你是在演骷髏兵嗎？拜託去多吃點，看著就礙眼。」",
+                "「雖然很輕，但這並不會讓你變得像妖精，只是看起來像乾枯的小草而已。」"
+            ],
+            normal: [
+                "「切，普通的數值。跟你的長相一樣平凡呢。」",
+                "「雖然在正常範圍，但別以為這樣我就會誇獎你喔？廢物。」",
+                "「還行吧。不過你這是在得意什麼？這不是理所當然的嗎？」"
+            ],
+            over: [
+                "「哇喔...這數字真是驚人呢。你是打算統治地球的引力嗎？」",
+                "「你那是肚子還是安全氣囊？再這樣下去，我都要看不見你的腳尖了。」",
+                "「呵呵，豬肉漲價了，你應該能賣個好價錢吧？死胖子。」",
+                "「喂，你走路的時候地板在哭喔。有沒有考慮過地球的感受？」"
+            ]
+        };
+
+        function calculateBMI() {
+            const h = document.getElementById('height').value / 100;
+            const w = document.getElementById('weight').value;
+
+            if (!h || !w || h <= 0 || w <= 0) {
+                showModal("「你是腦袋縮水了嗎？連數字都不會填？」");
+                return;
+            }
+
+            const bmi = (w / (h * h)).toFixed(1);
+            document.getElementById('bmi-value').innerText = bmi;
+            
+            let status = "";
+            let quotes = [];
+
+            if (bmi < 18.5) {
+                status = "體重過輕";
+                quotes = roastLibrary.under;
+            } else if (bmi < 24) {
+                status = "標準範圍";
+                quotes = roastLibrary.normal;
+            } else {
+                status = "體重過重";
+                quotes = roastLibrary.over;
+            }
+
+            const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+            
+            document.getElementById('status-label').innerText = status;
+            document.getElementById('comment').innerText = randomQuote;
+            document.getElementById('result-box').style.display = 'block';
+        }
+
+        function showModal(msg) {
+            // 簡單的自定義顯示，不使用 alert
+            const comment = document.getElementById('comment');
+            document.getElementById('bmi-value').innerText = "??";
+            document.getElementById('status-label').innerText = "錯誤";
+            comment.innerText = msg;
+            document.getElementById('result-box').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
